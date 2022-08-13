@@ -1,14 +1,12 @@
 const { Router } = require("express");
 const users = require("./user/user.route");
-const event = require("./event/event.route");
-const bookings = require("./bookings/bookings.route");
+const address = require("./address/address.route");
 
 module.exports = () => {
   const router = Router();
 
   router.use("/user", users);
-  router.use("/event", event);
-  router.use("/bookings", bookings);
+  router.use("/location", address);
 
   return router;
 };

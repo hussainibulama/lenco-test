@@ -2,19 +2,14 @@ const { HTTP } = require("../../constants/http");
 const { RESPONSE } = require("../../constants/response");
 const createError = require("../../helpers/createError");
 const { createResponse } = require("../../helpers/createResponse");
-const BookingService = require("./bookings.service");
+const UserService = require("./address.service");
 
-exports.BookEvent = async (req, res, next) => {
-  const id = req.userId;
-  const user = req.user;
+exports.addAddressController = async (req, res, next) => {
   try {
-    const { error, message, data } = await BookingService.BookEvent({
-      user_id: id,
-      event_id: req.body.event_id,
-      user_email: user.email,
-      event_title: req.body.event_title,
-      event_location: req.body.event_location,
-    });
+    const { error, message, data } = await UserService.addAddressService(
+      req.user,
+      req.body
+    );
     if (error) {
       return next(
         createError(HTTP.OK, [
@@ -36,10 +31,38 @@ exports.BookEvent = async (req, res, next) => {
     return next(createError.InternalServerError(err));
   }
 };
-exports.UserEvents = async (req, res, next) => {
-  const id = req.userId;
+exports.editAddressController = async (req, res, next) => {
   try {
-    const { error, message, data } = await BookingService.UserEvents(id);
+    const { error, message, data } = await UserService.editAddressService(
+      req.user,
+      req.body
+    );
+    if (error) {
+      return next(
+        createError(HTTP.OK, [
+          {
+            status: RESPONSE.ERROR,
+            message,
+            statusCode:
+              data instanceof Error ? HTTP.SERVER_ERROR : HTTP.BAD_REQUEST,
+            data,
+            code: HTTP.BAD_REQUEST,
+          },
+        ])
+      );
+    }
+    return createResponse(message, data)(res, HTTP.CREATED);
+  } catch (err) {
+    console.error(err);
+
+    return next(createError.InternalServerError(err));
+  }
+};
+exports.getAllAddressController = async (req, res, next) => {
+  try {
+    const { error, message, data } = await UserService.getAllAddressService(
+      req.user
+    );
     if (error) {
       return next(
         createError(HTTP.OK, [

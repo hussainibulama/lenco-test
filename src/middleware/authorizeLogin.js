@@ -10,14 +10,10 @@ exports.authorizeLogin = async (req, _, next) => {
     user = await User.findOne({
       $and: [
         {
-          $or: [
-            { phone_number: String(email) },
-            { username: String(email) },
-            { email: String(email) },
-          ],
+          $or: [{ phone_number: String(email) }, { email: String(email) }],
         },
       ],
-    });
+    }).select("+password");
 
     if (!user) {
       return next(
@@ -31,6 +27,7 @@ exports.authorizeLogin = async (req, _, next) => {
       );
     } else {
       req.user = user;
+
       next();
     }
   } catch (err) {

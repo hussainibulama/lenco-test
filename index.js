@@ -1,12 +1,14 @@
 const mongoose = require("mongoose");
 const app = require("./src/server");
+require("dotenv").config();
+
 // const rabbitConnect = require("./src/connection/amqp");
 const User = require("./src/services/user/user.model");
-const { hashPassword } = require("./src/helpers/password");
+// const { hashPassword } = require("./src/helpers/password");
 
 mongoose
   .connect(
-    "mongodb+srv://super:Super12345@cluster0.paded.mongodb.net/fig?retryWrites=true&w=majority",
+    "mongodb+srv://super:Super12345@cluster0.paded.mongodb.net/packers?retryWrites=true&w=majority",
     {
       autoIndex: true,
     }
@@ -25,18 +27,19 @@ mongoose
       console.log("error", err);
     }
   );
-const SeedUser = [
-  {
-    first_name: "Hussaini",
-    last_name: "Bulama",
-    email: "hussainibulama@gmail.com",
-    password: hashPassword("123456"),
-  },
-];
-const SeedDb = async () => {
-  await User.deleteMany({});
-  await User.insertMany(SeedUser);
-};
-SeedDb().then(() => {
-  console.log("seeded");
-});
+// const SeedUser = [
+//   {
+//     first_name: "Hussaini",
+//     last_name: "Bulama",
+//     email: "hussainibulama@gmail.com",
+//     password: hashPassword("123456"),
+//   },
+// ];
+// const SeedDb = async () => {
+//   await User.deleteMany({});
+//   await User.insertMany(SeedUser);
+// };
+// SeedDb().then(() => {
+//   console.log("seeded");
+//   console.log(process.env.jwt);
+// });

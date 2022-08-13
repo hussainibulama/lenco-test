@@ -21,7 +21,7 @@ createError.InternalServerError = (data = null) =>
       status: RESPONSE.ERROR,
       message: data.message || "Internal Server Error.",
       data,
-      stack: process.env.NODE === "development" ? new Error().stack : undefined,
+      stack: new Error().stack,
     },
   ]);
 

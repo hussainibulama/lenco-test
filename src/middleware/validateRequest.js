@@ -18,22 +18,25 @@ module.exports = function validateRequest(schema, field = "body") {
     });
     if (result.error) {
       const parsedResult = Array.isArray(result.error.details)
-        ? result.error.details.map((error) => ({
-            [String(error.path[0])]: error.message,
-          }))
-        : [
-            {
-              [String(result.error.message.split(" ")[0])]:
-                result.error.message,
-            },
-          ];
+        ? result.error.message.split(" ")[0]
+        : result.error.message;
+      // const parsedResult = Array.isArray(result.error.details)
+      //   ? result.error.details.map((error) => ({
+      //       [String(error.path[0])]: error.message,
+      //     }))
+      //   : [
+      //       {
+      //         [String(result.error.message.split(" ")[0])]:
+      //           result.error.message,
+      //       },
+      //     ];
       return next(
         createError(HTTP.OK, [
           {
             status: RESPONSE.ERROR,
             code: HTTP.UNPROCESSABLE_ENTITY,
-            message: "validation failed",
-            data: parsedResult,
+            message: `error while validating ${parsedResult}`,
+            data: {},
           },
         ])
       );

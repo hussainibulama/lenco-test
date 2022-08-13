@@ -38,7 +38,6 @@ exports.checkAuth = async (req, _, next) => {
     }
 
     if (user) {
-      req.userId = id;
       req.user = user;
       req.token = token;
       return next();

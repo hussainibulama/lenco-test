@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
-
 const routes = require("./services/routes");
 const createError = require("./helpers/createError");
 const { RESPONSE } = require("./constants/response");
@@ -35,7 +34,7 @@ const apiRouter = express.Router();
 apiRouter.use(routes());
 
 // handler for route-not-found
-apiRouter.use((_req, _res, next) => {
+apiRouter.use((req, res, next) => {
   next(
     createError(HTTP.NOT_FOUND, [
       {
@@ -50,7 +49,6 @@ apiRouter.use((_req, _res, next) => {
 
 // error handler for api router
 apiRouter.use((error, _req, res, _next) => {
-  console.log(error);
   const initialError = error;
   if (!error.statusCode) {
     error = createError(HTTP.SERVER_ERROR, [
@@ -69,11 +67,10 @@ apiRouter.use((error, _req, res, _next) => {
     status: error.status,
     message: error.message,
     data: error.data || null,
-    ...(process.env.NODE_ENV === "development" && { stack: error.stack }),
   });
 });
 
-const apiURL = `/figfinance`;
+const apiURL = `/v1`;
 
 app.use(apiURL, apiRouter);
 
