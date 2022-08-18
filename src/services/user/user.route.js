@@ -20,33 +20,21 @@ router.post(
   userController.loginUserController
 );
 router.patch(
-  "/update-phone",
+  "/update-balance",
   checkAuth,
-  validateRequest(userSchema.UserPhoneSchema, "body"),
-  userController.UserPhoneController
+  validateRequest(userSchema.UserUpdateBalanceSchema, "body"),
+  userController.UserUpdateBalanceController
 );
 router.patch(
-  "/update-details",
+  "/withdraw",
   checkAuth,
-  validateRequest(userSchema.UserDetailsSchema, "body"),
-  userController.UserDetailsController
+  validateRequest(userSchema.UserUpdateBalanceSchema, "body"),
+  userController.UserWithdrawController
 );
 router.patch(
-  "/update-password",
+  "/transfer",
   checkAuth,
-  validateRequest(userSchema.UserPasswordSchema, "body"),
-  userController.UserPasswordController
-);
-router.patch(
-  "/update-email",
-  checkAuth,
-  validateRequest(userSchema.registerUserSchema, "body"),
-  userController.UpdateEmailController
-);
-router.patch(
-  "/notification",
-  checkAuth,
-  validateRequest(userSchema.UserNotificationSchema, "body"),
-  userController.UserNotificationController
+  validateRequest(userSchema.UserTransferSchema, "body"),
+  userController.UserTransferController
 );
 module.exports = router;

@@ -1,23 +1,40 @@
 const { hashPassword, comparePassword } = require("../../helpers/password");
 const { jwtSign } = require("../../helpers/token");
-const User = require("./user.model");
-
+const knex = require("../../../knex.js");
+const moment = require("moment");
+const date = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
 exports.registerUser = async (res, data) => {
   let user;
   try {
     const password = hashPassword(data.password);
     const email = data.email && data.email.toLowerCase();
 
-    user = await User.create({
-      password,
-      email,
-    });
+    console.log(date);
+    user = await knex("users").insert(
+      {
+        name: data.name,
+        email: email,
+        password: password,
+        wallet: 0,
+        created_at: date,
+        updated_at: date,
+      },
+      {
+        includeTriggerModifications: true,
+      }
+    );
+
     return {
       error: !user,
       message: !user
         ? "Error while registering user"
         : "User registered successfully",
-      data: !user ? null : user,
+      data: !user
+        ? null
+        : {
+            email: data.email,
+            name: data.name,
+          },
     };
   } catch (err) {
     user && user.deleteOne();
@@ -39,15 +56,10 @@ exports.loginUser = async (user, data) => {
       };
     }
 
-    const accessToken = jwtSign(user._id);
-    await User.findOneAndUpdate(
-      {
-        _id: user._id,
-      },
-      {
-        last_issued_at: new Date(),
-      }
-    );
+    const accessToken = jwtSign(user.id);
+    await knex("users").where("id", user.id).update({
+      updated_at: date,
+    });
 
     return {
       error: !user,
@@ -62,23 +74,25 @@ exports.loginUser = async (user, data) => {
     };
   }
 };
-exports.UserPhoneService = async (user, data) => {
+exports.UserUpdateBalanceService = async (user, data) => {
   try {
-    let phone = await User.findOneAndUpdate(
-      {
-        _id: user._id,
-      },
-      {
-        phone: data.phone,
-        last_issued_at: new Date(),
-      },
-      { new: true }
-    );
+    console.log("hey", user);
+    let wal = await knex("users")
+      .where("id", user.id)
+      .update({
+        wallet: Number(user.wallet + data.amount),
+        updated_at: date,
+      });
 
     return {
-      error: !phone,
-      message: !phone ? "Failed to update phone" : "Phone updated successfully",
-      data: !phone ? null : phone,
+      error: !wal,
+      message: !wal ? "Failed to update phone" : "Phone updated successfully",
+      data: !wal
+        ? null
+        : {
+            oldBal: user.wallet,
+            newBal: Number(user.wallet + data.amount),
+          },
     };
   } catch (err) {
     return {
@@ -88,25 +102,28 @@ exports.UserPhoneService = async (user, data) => {
     };
   }
 };
-exports.UserDetailsService = async (user, data) => {
+exports.UserWithdrawService = async (user, data) => {
   try {
-    let Details = await User.findOneAndUpdate(
-      {
-        _id: user._id,
-      },
-      {
-        first_name: data.first_name,
-        last_name: data.last_name,
-        last_issued_at: new Date(),
-      },
-      { new: true }
-    );
+    if (user.wallet < data.amount) {
+      return {
+        error: true,
+        message: "Insufficient amount",
+        data: null,
+      };
+    }
+    let wal = await knex("users")
+      .where("id", user.id)
+      .update({
+        wallet: Number(user.wallet - data.amount),
+        updated_at: date,
+      });
     return {
-      error: !Details,
-      message: !Details
-        ? "Failed to update details"
-        : "User details updated successfully",
-      data: !Details ? null : Details,
+      error: !wal,
+      message: !wal ? "Failed to withdraw " : "User withdraw successfully",
+      data: {
+        oldBal: user.wallet,
+        newBal: Number(user.wallet - data.amount),
+      },
     };
   } catch (err) {
     return {
@@ -116,108 +133,56 @@ exports.UserDetailsService = async (user, data) => {
     };
   }
 };
-exports.UserPasswordService = async (user, data) => {
+exports.UserTransferService = async (user, data) => {
   try {
-    let users = await User.findOne({
-      _id: user._id,
-    }).select("+password");
-    const passwordMatch = await comparePassword(users.password, data.password);
-    if (!passwordMatch) {
+    if (user.wallet < data.amount) {
       return {
         error: true,
-        message: " Old password doesn`t match",
+        message: "Insufficient amount",
+        data: null,
       };
     }
-    const password = hashPassword(data.new_password);
-
-    let Change = await User.findOneAndUpdate(
-      {
-        _id: user._id,
-      },
-      {
-        password: password,
-        last_issued_at: new Date(),
-      },
-      { new: true }
-    );
+    let usr = await knex("users").where("email", data.email);
+    if (usr.length <= 0) {
+      return {
+        error: true,
+        message: "user doesn`t exist in our system",
+        data: null,
+      };
+    }
+    let uEmail = usr[0].email;
+    let uWal = usr[0].wallet;
+    console.log("hehe", uEmail, uWal, data.amount);
+    let tuser = await knex("users")
+      .where("email", uEmail)
+      .update({
+        wallet: Number(uWal + data.amount),
+        updated_at: date,
+      });
+    let wal;
+    if (tuser) {
+      wal = await knex("users")
+        .where("id", user.id)
+        .update({
+          wallet: Number(user.wallet - data.amount),
+          updated_at: date,
+        });
+    }
     return {
-      error: !Change,
-      message: !Change
-        ? "Failed to change password"
-        : "Password Change successfully",
-      data: !Change ? null : Change,
+      error: !tuser && !wal,
+      message: !tuser && !wal ? "transfer fail" : "transfer successful",
+      data:
+        !tuser && !wal
+          ? null
+          : {
+              oldBal: user.wallet,
+              newBal: Number(user.wallet - data.amount),
+            },
     };
   } catch (err) {
     return {
       error: true,
       message: err?.msg || err?.message || "Error while updating password",
-      data: err?.response?.data || err,
-    };
-  }
-};
-exports.UpdateEmailServices = async (user, data) => {
-  try {
-    let users = await User.findOne({
-      _id: user._id,
-    }).select("+password");
-    const passwordMatch = await comparePassword(users.password, data.password);
-    if (!passwordMatch) {
-      return {
-        error: true,
-        message: "Password incorrect",
-      };
-    }
-
-    let Email = await User.findOneAndUpdate(
-      {
-        _id: user._id,
-      },
-      {
-        email: data.email,
-        last_issued_at: new Date(),
-      },
-      { new: true }
-    );
-    return {
-      error: !Email,
-      message: !Email ? "Failed to update email" : "Email updated successfully",
-      data: !Email ? null : Email,
-    };
-  } catch (err) {
-    return {
-      error: true,
-      message: err?.msg || err?.message || "Error while updating password",
-      data: err?.response?.data || err,
-    };
-  }
-};
-exports.UserNotificationService = async (user, data) => {
-  try {
-    let noti = await User.findOneAndUpdate(
-      {
-        _id: user._id,
-      },
-      {
-        notification: {
-          push_notification: data.push_notification,
-          sms: data.sms,
-          email_notification: data.email_notification,
-        },
-        last_issued_at: new Date(),
-      },
-      { new: true }
-    );
-    return {
-      error: !noti,
-      message: !noti
-        ? "Failed to update details"
-        : "User details updated successfully",
-      data: !noti ? null : noti,
-    };
-  } catch (err) {
-    return {
-      error: true,
-      message: err?.msg || err?.message || "Error while updating user details",
       data: err?.response?.data || err,
     };
   }

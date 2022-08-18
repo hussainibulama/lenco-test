@@ -2,29 +2,23 @@ const mongoose = require("mongoose");
 const { HTTP } = require("../constants/http");
 const { RESPONSE } = require("../constants/response");
 const createError = require("../helpers/createError");
-const User = require("../services/user/user.model");
+const knex = require("../../knex.js");
 
 exports.checkExistingUser = async (req, _, next) => {
-  let { email, type } = req.body;
+  let { email } = req.body;
   try {
-    const userEmail =
-      email && (await User.findOne({ email: email.toLowerCase() }));
-
-    if (
-      userEmail &&
-      (req.userId ? !userEmail._id.equals(req.userId) : !req.userId)
-    ) {
+    const userEmail = await knex("users").where("email", email);
+    if (userEmail.length > 0 && userEmail[0].email === email.toLowerCase()) {
       return next(
         createError(HTTP.OK, [
           {
             status: RESPONSE.ERROR,
-            message: `${type} with this email already exists`,
+            message: `email already exists`,
             code: HTTP.BAD_REQUEST,
           },
         ])
       );
     }
-
     return next();
   } catch (err) {
     console.error(err);

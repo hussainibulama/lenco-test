@@ -59,9 +59,9 @@ exports.loginUserController = async (req, res, next) => {
   }
 };
 
-exports.UserPhoneController = async (req, res, next) => {
+exports.UserUpdateBalanceController = async (req, res, next) => {
   try {
-    const { error, message, data } = await UserService.UserPhoneService(
+    const { error, message, data } = await UserService.UserUpdateBalanceService(
       req.user,
       req.body
     );
@@ -86,9 +86,9 @@ exports.UserPhoneController = async (req, res, next) => {
   }
 };
 
-exports.UserDetailsController = async (req, res, next) => {
+exports.UserWithdrawController = async (req, res, next) => {
   try {
-    const { error, message, data } = await UserService.UserDetailsService(
+    const { error, message, data } = await UserService.UserWithdrawService(
       req.user,
       req.body
     );
@@ -113,63 +113,9 @@ exports.UserDetailsController = async (req, res, next) => {
   }
 };
 
-exports.UserPasswordController = async (req, res, next) => {
+exports.UserTransferController = async (req, res, next) => {
   try {
-    const { error, message, data } = await UserService.UserPasswordService(
-      req.user,
-      req.body
-    );
-    if (error) {
-      return next(
-        createError(HTTP.OK, [
-          {
-            status: RESPONSE.ERROR,
-            message,
-            statusCode: data instanceof Error ? HTTP.SERVER_ERROR : HTTP.OK,
-            data,
-            code: HTTP.BAD_REQUEST,
-          },
-        ])
-      );
-    }
-    return createResponse(message, data)(res, HTTP.OK);
-  } catch (err) {
-    console.error(err);
-
-    return next(createError.InternalServerError(err));
-  }
-};
-
-exports.UpdateEmailController = async (req, res, next) => {
-  try {
-    const { error, message, data } = await UserService.UpdateEmailServices(
-      req.user,
-      req.body
-    );
-    if (error) {
-      return next(
-        createError(HTTP.OK, [
-          {
-            status: RESPONSE.ERROR,
-            message,
-            statusCode: data instanceof Error ? HTTP.SERVER_ERROR : HTTP.OK,
-            data,
-            code: HTTP.BAD_REQUEST,
-          },
-        ])
-      );
-    }
-    return createResponse(message, data)(res, HTTP.OK);
-  } catch (err) {
-    console.error(err);
-
-    return next(createError.InternalServerError(err));
-  }
-};
-
-exports.UserNotificationController = async (req, res, next) => {
-  try {
-    const { error, message, data } = await UserService.UserNotificationService(
+    const { error, message, data } = await UserService.UserTransferService(
       req.user,
       req.body
     );

@@ -1,21 +1,14 @@
 const { HTTP } = require("../constants/http");
 const { RESPONSE } = require("../constants/response");
 const createError = require("../helpers/createError");
-const User = require("../services/user/user.model");
+const knex = require("../../knex.js");
 
 exports.authorizeLogin = async (req, _, next) => {
   let email = String(req.body.email);
   try {
     let user = null;
-    user = await User.findOne({
-      $and: [
-        {
-          $or: [{ phone_number: String(email) }, { email: String(email) }],
-        },
-      ],
-    }).select("+password");
-
-    if (!user) {
+    user = await knex("users").where("email", email);
+    if (user.length <= 0) {
       return next(
         createError(HTTP.OK, [
           {
@@ -26,8 +19,7 @@ exports.authorizeLogin = async (req, _, next) => {
         ])
       );
     } else {
-      req.user = user;
-
+      req.user = user[0];
       next();
     }
   } catch (err) {
