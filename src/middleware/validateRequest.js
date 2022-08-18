@@ -20,16 +20,7 @@ module.exports = function validateRequest(schema, field = "body") {
       const parsedResult = Array.isArray(result.error.details)
         ? result.error.message.split(" ")[0]
         : result.error.message;
-      // const parsedResult = Array.isArray(result.error.details)
-      //   ? result.error.details.map((error) => ({
-      //       [String(error.path[0])]: error.message,
-      //     }))
-      //   : [
-      //       {
-      //         [String(result.error.message.split(" ")[0])]:
-      //           result.error.message,
-      //       },
-      //     ];
+
       return next(
         createError(HTTP.OK, [
           {
